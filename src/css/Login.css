@@ -1,0 +1,90 @@
+/* Full screen background */
+.login-container {
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: radial-gradient(circle at top, #3b0a0a, #120404 70%);
+}
+
+/* Card */
+.login-card {
+  background: rgba(255, 255, 255, 0.06);
+  padding: 40px;
+  border-radius: 20px;
+  width: 320px;
+  text-align: center;
+  backdrop-filter: blur(18px);
+
+  box-shadow: 
+    0 10px 40px rgba(0,0,0,0.6),
+    inset 0 0 10px rgba(255,255,255,0.05);
+
+  border: 1px solid rgba(255,255,255,0.1);
+  color: white;
+}
+
+/* Title */
+.login-card h2 {
+  margin-bottom: 5px;
+  letter-spacing: 0.5px;
+}
+
+.subtitle {
+  font-size: 14px;
+  color: #e5e7eb;
+  margin-bottom: 25px;
+}
+
+/* Inputs */
+.login-card input {
+  width: 90%;
+  padding: 12px;
+  margin-bottom: 15px;
+  border-radius: 10px;
+  outline: none;
+
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.08);
+  color: white;
+
+  transition: 0.25s;
+}
+
+/* Focus effect */
+.login-card input:focus {
+  border: 1px solid #800000;
+  box-shadow: 0 0 10px rgba(128,0,0,0.5);
+}
+
+/* Placeholder */
+.login-card input::placeholder {
+  color: #cbd5f5;
+}
+
+/* Button */
+.login-card button {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  border: none;
+
+  background: linear-gradient(135deg, #800000, #5a0000);
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+
+  box-shadow: 0 5px 20px rgba(128,0,0,0.5);
+  transition: all 0.25s ease;
+}
+
+/* Hover */
+.login-card button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(128,0,0,0.7);
+}
+
+/* Active */
+.login-card button:active {
+  transform: scale(0.96);
+}

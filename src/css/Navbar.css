@@ -1,0 +1,160 @@
+.nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  padding: 15px 30px;
+  background: var(--primary);
+  color: var(--secondary);
+
+  transition: 0.3s;
+}
+/* Logo / Title */
+.nav h1 {
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+/* Right side buttons */
+.nav .login-btn {
+  padding: 8px 16px;
+  max-width: 100px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.2);
+
+  background: transparent;
+  color: white;
+  cursor: pointer;
+
+  transition: 0.25s;
+}
+.nav button:not(.login-btn) {
+  padding: 8px 16px;
+  border-radius: 8px;
+
+  border: 1px solid rgba(255,255,255,0.2);
+  background: transparent;
+  color: white;
+
+  cursor: pointer;
+  transition: 0.25s;
+}
+
+/* CARDS hover */
+.nav button:not(.login-btn):hover {
+  background: rgba(255,255,255,0.1);
+  border-color: rgba(255,255,255,0.3);
+  transform: translateY(-1px);
+}
+
+/* CARDS click */
+.nav button:not(.login-btn):active {
+  transform: scale(0.95);
+}
+
+/* Hover */
+.nav .login-btn:hover {
+  background: #800000;
+  border-color: #800000;
+  transform: translateY(-1px);
+}
+
+/* Optional: active click */
+.nav .login-btn:active {
+  transform: scale(0.95);
+}
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  z-index: 2000;
+}
+
+.modal {
+  width: 420px;
+  max-height: 70vh;
+
+  background: var(--primary);
+  color: var(--secondary);
+
+  border-radius: 12px;
+  padding: 20px;
+
+  overflow-y: auto;
+
+  box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+}
+
+/* Table */
+.modal table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+.modal th,
+.modal td {
+  padding: 10px;
+  font-size: 13px;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.modal th {
+  text-align: left;
+  opacity: 0.8;
+}
+
+/* Delete button */
+.modal td button {
+  background: #ef4444;
+  color: white;
+
+  border: none;
+  padding: 6px 10px;
+  border-radius: 6px;
+
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.modal td button:hover {
+  background: #dc2626;
+  transform: scale(1.05);
+}
+
+/* Modal footer buttons */
+.modal > button {
+  margin-top: 10px;
+  margin-right: 10px;
+
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: none;
+
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.modal > button:first-of-type {
+  background: #2563eb;
+  color: white;
+}
+
+.modal > button:first-of-type:hover {
+  background: #1d4ed8;
+}
+
+.modal > button:last-of-type {
+  background: #374151;
+  color: white;
+}
+
+.modal > button:last-of-type:hover {
+  background: #4b5563;
+}
