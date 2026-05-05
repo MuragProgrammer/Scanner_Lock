@@ -3,7 +3,7 @@
   justify-content: space-between;
   align-items: center;
 
-  padding: 15px 30px;
+  padding: 5px 10px;
   background: var(--primary);
   color: var(--secondary);
 
@@ -29,30 +29,6 @@
 
   transition: 0.25s;
 }
-.nav button:not(.login-btn) {
-  padding: 8px 16px;
-  border-radius: 8px;
-
-  border: 1px solid rgba(255,255,255,0.2);
-  background: transparent;
-  color: white;
-
-  cursor: pointer;
-  transition: 0.25s;
-}
-
-/* CARDS hover */
-.nav button:not(.login-btn):hover {
-  background: rgba(255,255,255,0.1);
-  border-color: rgba(255,255,255,0.3);
-  transform: translateY(-1px);
-}
-
-/* CARDS click */
-.nav button:not(.login-btn):active {
-  transform: scale(0.95);
-}
-
 /* Hover */
 .nav .login-btn:hover {
   background: #800000;
@@ -64,6 +40,7 @@
 .nav .login-btn:active {
   transform: scale(0.95);
 }
+
 .modal-overlay {
   position: fixed;
   inset: 0;

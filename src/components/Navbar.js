@@ -73,8 +73,8 @@ export default function Navbar() {
       <div className="nav">
         <h3>RFID Lock System</h3>
 
-        <div>
-          <button onClick={openCards}>CARDS</button>
+        <div className="nav-btn">
+          <button onClick={openCards}>Cards</button>
           <button onClick={logout}>Logout</button>
         </div>
       </div>
