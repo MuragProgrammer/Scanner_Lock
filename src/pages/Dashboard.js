@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import Navbar from "../components/Navbar";
-import "../css/Dashboard.css";
+import "./Dashboard.css";
 import client from "../services/mqtt";
 
 export default function Dashboard() {
