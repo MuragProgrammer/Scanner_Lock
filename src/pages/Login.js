@@ -10,6 +10,7 @@ export default function Login({ setAuth }) {
 
     if (user === "admin" && password === "1234") {
         localStorage.setItem("token", "fake-token");
+        localStorage.setItem("activeUser", user); // ✅ ADD THIS
         setAuth(true);
     } else {
         alert("Invalid credentials");

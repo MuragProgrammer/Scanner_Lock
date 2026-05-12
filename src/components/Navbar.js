@@ -8,6 +8,7 @@ export default function Navbar() {
 
   const [showModal, setShowModal] = useState(false);
   const [cards, setCards] = useState([]);
+  const [isDirty, setIsDirty] = useState(false);
 
   // ================= LOGOUT =================
   const logout = () => {
@@ -16,20 +17,50 @@ export default function Navbar() {
     window.location.reload();
   };
 
-  // ================= FETCH CARDS =================
+  // ================= FETCH =================
   const fetchCards = () => {
     client.publish("lock/door1/control", "GET_CARDS");
   };
 
-  // ================= OPEN MODAL =================
   const openCards = () => {
     setShowModal(true);
     fetchCards();
   };
 
-  // ================= DELETE =================
+  // ================= STORAGE =================
+  const getSavedNames = () => {
+    return JSON.parse(localStorage.getItem("cardNames") || "{}");
+  };
+
+  const saveNamesToStorage = (data) => {
+    localStorage.setItem("cardNames", JSON.stringify(data));
+  };
+
+  // ================= UID =================
+  const normalizeUID = (uid) =>
+    uid.replace(/\s/g, "").toUpperCase();
+
+  const formatUID = (uid) =>
+    uid.match(/.{1,2}/g)?.join(" ") || uid;
+
+  // ================= DELETE CARD (FIXED) =================
   const deleteCard = (uid) => {
-    client.publish("lock/door1/control", `DELETE:${uid}`);
+    const cleanUID = normalizeUID(uid);
+
+    // 1. update localStorage
+    const saved = getSavedNames();
+    delete saved[cleanUID];
+    saveNamesToStorage(saved);
+
+    // 2. update UI instantly
+    setCards(prev => prev.filter(c => c.uid !== cleanUID));
+
+    // 3. send to ESP32
+    client.publish("lock/door1/control", `DELETE:${cleanUID}`);
+
+    setIsDirty(true);
+
+    console.log("Deleted card:", cleanUID);
   };
 
   // ================= ADD MODE =================
@@ -38,27 +69,67 @@ export default function Navbar() {
     alert("Scan new card on device...");
   };
 
-  // ================= MQTT LISTENER =================
+  // ================= EDIT =================
+  const editCard = (uid) => {
+    const cleanUID = normalizeUID(uid);
+
+    const newName = prompt("Enter new name:");
+    if (!newName?.trim()) return;
+
+    const saved = getSavedNames();
+    saved[cleanUID] = newName.trim();
+    saveNamesToStorage(saved);
+
+    setCards(prev =>
+      prev.map(c =>
+        c.uid === cleanUID
+          ? { ...c, name: newName.trim() }
+          : c
+      )
+    );
+
+    setIsDirty(true);
+  };
+
+  // ================= SAVE =================
+  const saveChanges = () => {
+    const map = {};
+
+    cards.forEach(c => {
+      map[normalizeUID(c.uid)] = c.name;
+    });
+
+    saveNamesToStorage(map);
+    setIsDirty(false);
+
+    alert("Saved successfully!");
+  };
+
+  // ================= MQTT =================
   useEffect(() => {
     client.subscribe("lock/door1/cards");
-    client.subscribe("lock/door1/status");
 
     const handler = (topic, message) => {
+      if (topic !== "lock/door1/cards") return;
+
       const msg = message.toString();
+      const saved = getSavedNames();
 
-      // ================= CARDS LIST =================
-      if (topic === "lock/door1/cards") {
-        const list = msg.split(",").filter(Boolean);
-        setCards([...list]);
-      }
+      const list = msg
+        .split(",")
+        .filter(Boolean)
+        .map(uid => {
+          const cleanUID = normalizeUID(uid);
 
-      // ================= AUTO REFRESH AFTER CHANGE =================
-      if (
-        msg === "CARD_ADDED" ||
-        msg === "CARD_DELETED"
-      ) {
-        fetchCards(); // 🔥 AUTO REFRESH
-      }
+          return {
+            uid: cleanUID,
+            displayUID: formatUID(cleanUID),
+            name: saved[cleanUID] || "Unknown"
+          };
+        });
+
+      setCards(list);
+      setIsDirty(false);
     };
 
     client.on("message", handler);
@@ -79,7 +150,6 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* ================= MODAL ================= */}
       {showModal && (
         <div className="modal-overlay">
           <div className="modal">
@@ -88,28 +158,43 @@ export default function Navbar() {
             <table>
               <thead>
                 <tr>
+                  <th>Name</th>
                   <th>UID</th>
                   <th>Action</th>
                 </tr>
               </thead>
 
               <tbody>
-                {cards.map((uid, i) => (
-                  <tr key={i}>
-                    <td>{uid}</td>
-                    <td>
-                      <button onClick={() => deleteCard(uid)}>
-                        Delete
-                      </button>
-                    </td>
+                {cards.length === 0 ? (
+                  <tr>
+                    <td colSpan="3">No cards found</td>
                   </tr>
-                ))}
+                ) : (
+                  cards.map((card, i) => (
+                    <tr key={i}>
+                      <td>{card.name}</td>
+                      <td>{card.displayUID}</td>
+
+                      <td>
+                        <button onClick={() => editCard(card.uid)}>Edit</button>
+                        <button onClick={() => deleteCard(card.uid)}>Delete</button>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
 
             <div className="modal-actions">
               <button onClick={addCard}>Add Card</button>
-              <button onClick={() => setShowModal(false)}>Close</button>
+
+              {isDirty && (
+                <button onClick={saveChanges}>Save Changes</button>
+              )}
+
+              <button onClick={() => setShowModal(false)}>
+                Close
+              </button>
             </div>
           </div>
         </div>
