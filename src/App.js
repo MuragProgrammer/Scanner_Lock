@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import "./App.css";
 
-const INACTIVITY_LIMIT = 60 * 1000; // 10 minutes
+const INACTIVITY_LIMIT = 60 * 1000; // 1 minute
 
 function App() {
   const [auth, setAuth] = useState(
@@ -11,12 +11,21 @@ function App() {
   );
 
   // ================= UPDATE ACTIVITY =================
-  const updateActivity = () => {
+  const updateActivity = useCallback(() => {
     localStorage.setItem("lastActivity", Date.now().toString());
-  };
+  }, []);
+
+  // ================= LOGOUT =================
+  const logout = useCallback(() => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("activeUser");
+    localStorage.removeItem("lastActivity");
+
+    setAuth(false);
+  }, []);
 
   // ================= CHECK INACTIVITY =================
-  const checkInactivity = () => {
+  const checkInactivity = useCallback(() => {
     const last = localStorage.getItem("lastActivity");
 
     if (!last) return;
@@ -26,16 +35,7 @@ function App() {
     if (diff > INACTIVITY_LIMIT) {
       logout();
     }
-  };
-
-  // ================= LOGOUT =================
-  const logout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("activeUser");
-    localStorage.removeItem("lastActivity");
-
-    setAuth(false);
-  };
+  }, [logout]);
 
   // ================= LOGIN LISTENER =================
   useEffect(() => {
@@ -54,16 +54,17 @@ function App() {
         window.addEventListener(event, updateActivity)
       );
 
-      const interval = setInterval(checkInactivity, 10000); // every 10 sec
+      const interval = setInterval(checkInactivity, 10000);
 
       return () => {
         events.forEach((event) =>
           window.removeEventListener(event, updateActivity)
         );
+
         clearInterval(interval);
       };
     }
-  }, [auth]);
+  }, [auth, updateActivity, checkInactivity]);
 
   return auth ? (
     <Dashboard logout={logout} />
