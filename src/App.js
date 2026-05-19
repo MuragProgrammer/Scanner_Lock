@@ -2,6 +2,12 @@ import { useEffect, useState, useCallback } from "react";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import "./App.css";
+import "./utils/toast.css";
+
+// ===== TOAST =====
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { notifyWarning } from "./utils/toast";
 
 const INACTIVITY_LIMIT = 60 * 1000; // 1 minute
 
@@ -20,6 +26,8 @@ function App() {
     localStorage.removeItem("token");
     localStorage.removeItem("activeUser");
     localStorage.removeItem("lastActivity");
+
+    notifyWarning("Logged out due to inactivity");
 
     setAuth(false);
   }, []);
@@ -66,10 +74,22 @@ function App() {
     }
   }, [auth, updateActivity, checkInactivity]);
 
-  return auth ? (
-    <Dashboard logout={logout} />
-  ) : (
-    <Login setAuth={setAuth} />
+  return (
+    <>
+      {auth ? (
+        <Dashboard logout={logout} />
+      ) : (
+        <Login setAuth={setAuth} />
+      )}
+
+      {/* ===== TOAST CONTAINER ===== */}
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        pauseOnHover
+        theme="dark"
+      />
+    </>
   );
 }
 

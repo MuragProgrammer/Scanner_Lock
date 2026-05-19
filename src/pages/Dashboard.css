@@ -4,7 +4,9 @@
   --bg: #120404;
   --text: #ffffff;
 }
-
+h3{
+  color: var(--text);
+}
 .dashboard-container {
   min-height: 100vh;
   display: flex;

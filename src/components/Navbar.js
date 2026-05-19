@@ -3,6 +3,14 @@ import { useState, useEffect } from "react";
 import "./Navbar.css";
 import client from "../services/mqtt";
 
+// ===== TOAST =====
+import {
+  notifySuccess,
+  notifyError,
+  notifyInfo,
+  notifyWarning,
+} from "../utils/toast";
+
 export default function Navbar() {
   const navigate = useNavigate();
 
@@ -13,6 +21,9 @@ export default function Navbar() {
   // ================= LOGOUT =================
   const logout = () => {
     localStorage.removeItem("token");
+
+    notifyInfo("Logged out successfully");
+
     navigate("/");
     window.location.reload();
   };
@@ -25,6 +36,8 @@ export default function Navbar() {
   const openCards = () => {
     setShowModal(true);
     fetchCards();
+
+    notifyInfo("Fetching RFID cards...");
   };
 
   // ================= STORAGE =================
@@ -43,22 +56,29 @@ export default function Navbar() {
   const formatUID = (uid) =>
     uid.match(/.{1,2}/g)?.join(" ") || uid;
 
-  // ================= DELETE CARD (FIXED) =================
+  // ================= DELETE CARD =================
   const deleteCard = (uid) => {
     const cleanUID = normalizeUID(uid);
 
-    // 1. update localStorage
+    // update localStorage
     const saved = getSavedNames();
     delete saved[cleanUID];
     saveNamesToStorage(saved);
 
-    // 2. update UI instantly
-    setCards(prev => prev.filter(c => c.uid !== cleanUID));
+    // update UI
+    setCards((prev) =>
+      prev.filter((c) => c.uid !== cleanUID)
+    );
 
-    // 3. send to ESP32
-    client.publish("lock/door1/control", `DELETE:${cleanUID}`);
+    // send to ESP32
+    client.publish(
+      "lock/door1/control",
+      `DELETE:${cleanUID}`
+    );
 
     setIsDirty(true);
+
+    notifyWarning("RFID card deleted");
 
     console.log("Deleted card:", cleanUID);
   };
@@ -66,22 +86,32 @@ export default function Navbar() {
   // ================= ADD MODE =================
   const addCard = () => {
     client.publish("lock/door1/control", "ADD_MODE");
-    alert("Scan new card on device...");
+
+    notifyInfo("Scan new RFID card on device...");
+
+    // AUTO REFRESH CARD LIST
+    setTimeout(() => {
+      fetchCards();
+    }, 4000);
   };
+
 
   // ================= EDIT =================
   const editCard = (uid) => {
     const cleanUID = normalizeUID(uid);
 
     const newName = prompt("Enter new name:");
-    if (!newName?.trim()) return;
+    if (!newName?.trim()) {
+      notifyError("Card name cannot be empty");
+      return;
+    }
 
     const saved = getSavedNames();
     saved[cleanUID] = newName.trim();
     saveNamesToStorage(saved);
 
-    setCards(prev =>
-      prev.map(c =>
+    setCards((prev) =>
+      prev.map((c) =>
         c.uid === cleanUID
           ? { ...c, name: newName.trim() }
           : c
@@ -95,14 +125,14 @@ export default function Navbar() {
   const saveChanges = () => {
     const map = {};
 
-    cards.forEach(c => {
+    cards.forEach((c) => {
       map[normalizeUID(c.uid)] = c.name;
     });
 
     saveNamesToStorage(map);
     setIsDirty(false);
 
-    alert("Saved successfully!");
+    notifySuccess("Changes saved successfully!");
   };
 
   // ================= MQTT =================
@@ -118,13 +148,13 @@ export default function Navbar() {
       const list = msg
         .split(",")
         .filter(Boolean)
-        .map(uid => {
+        .map((uid) => {
           const cleanUID = normalizeUID(uid);
 
           return {
             uid: cleanUID,
             displayUID: formatUID(cleanUID),
-            name: saved[cleanUID] || "Unknown"
+            name: saved[cleanUID] || "Unknown",
           };
         });
 
@@ -176,8 +206,17 @@ export default function Navbar() {
                       <td>{card.displayUID}</td>
 
                       <td>
-                        <button onClick={() => editCard(card.uid)}>Edit</button>
-                        <button onClick={() => deleteCard(card.uid)}>Delete</button>
+                        <button
+                          onClick={() => editCard(card.uid)}
+                        >
+                          Edit
+                        </button>
+
+                        <button
+                          onClick={() => deleteCard(card.uid)}
+                        >
+                          Delete
+                        </button>
                       </td>
                     </tr>
                   ))
@@ -186,13 +225,19 @@ export default function Navbar() {
             </table>
 
             <div className="modal-actions">
-              <button onClick={addCard}>Add Card</button>
+              <button onClick={addCard}>
+                Add Card
+              </button>
 
               {isDirty && (
-                <button onClick={saveChanges}>Save Changes</button>
+                <button onClick={saveChanges}>
+                  Save Changes
+                </button>
               )}
 
-              <button onClick={() => setShowModal(false)}>
+              <button
+                onClick={() => setShowModal(false)}
+              >
                 Close
               </button>
             </div>

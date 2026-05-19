@@ -3,37 +3,67 @@ import Navbar from "../components/Navbar";
 import "./Dashboard.css";
 import client from "../services/mqtt";
 
+// ===== TOAST =====
+import {
+  notifySuccess,
+  notifyError,
+  notifyInfo,
+  notifyWarning,
+} from "../utils/toast";
+
 export default function Dashboard() {
   const [status, setStatus] = useState("SEARCHING");
   const [lastUpdated, setLastUpdated] = useState(null);
   const [lastUser, setLastUser] = useState("No User Yet");
 
+  // ===== COOLDOWN =====
+  const [isCoolingDown, setIsCoolingDown] = useState(false);
+
   const lastUIDRef = useRef("");
 
   // ================= STORAGE =================
   const getSavedCards = () => {
-    return JSON.parse(localStorage.getItem("cardNames") || "{}");
+    return JSON.parse(
+      localStorage.getItem("cardNames") || "{}"
+    );
   };
 
   // ================= NORMALIZE =================
   const normalizeUID = (uid) => {
-    return uid.toString().replace(/\s/g, "").toUpperCase();
+    return uid
+      .toString()
+      .replace(/\s/g, "")
+      .toUpperCase();
   };
 
   // ================= ACTIVE USER =================
   const getActiveUser = () => {
-    return (localStorage.getItem("activeUser") || "ADMIN").toUpperCase();
+    return (
+      localStorage.getItem("activeUser") || "ADMIN"
+    ).toUpperCase();
   };
 
-  // ================= CONTROL =================
+  // ================= UNLOCK =================
   const unlock = () => {
+    // ===== BLOCK SPAM =====
+    if (isCoolingDown) return;
+
+    setIsCoolingDown(true);
+
     const uid = lastUIDRef.current;
     const cards = getSavedCards();
 
-    // ❗ BLOCK IF NOT VALID CARD
+    // BLOCK INVALID CARD
     if (uid && !cards[uid]) {
       setLastUser("INVALID ACCESS (BLOCKED)");
       setLastUpdated(new Date().toLocaleTimeString());
+
+      notifyError("Access denied! Invalid RFID card.");
+
+      setTimeout(() => {
+        setIsCoolingDown(false);
+      }, 3000);
+
       return;
     }
 
@@ -41,15 +71,35 @@ export default function Dashboard() {
 
     setLastUser(getActiveUser());
     setLastUpdated(new Date().toLocaleTimeString());
+
+    notifySuccess("Door unlocked");
+
+    // ===== ENABLE AGAIN =====
+    setTimeout(() => {
+      setIsCoolingDown(false);
+    }, 3000);
   };
 
+  // ================= LOCK =================
   const lock = () => {
+    // ===== BLOCK SPAM =====
+    if (isCoolingDown) return;
+
+    setIsCoolingDown(true);
+
     const uid = lastUIDRef.current;
     const cards = getSavedCards();
 
     if (uid && !cards[uid]) {
       setLastUser("INVALID ACCESS (BLOCKED)");
       setLastUpdated(new Date().toLocaleTimeString());
+
+      notifyError("Access denied! Invalid RFID card.");
+
+      setTimeout(() => {
+        setIsCoolingDown(false);
+      }, 3000);
+
       return;
     }
 
@@ -57,6 +107,13 @@ export default function Dashboard() {
 
     setLastUser(getActiveUser());
     setLastUpdated(new Date().toLocaleTimeString());
+
+    notifyInfo("Door locked");
+
+    // ===== ENABLE AGAIN =====
+    setTimeout(() => {
+      setIsCoolingDown(false);
+    }, 3000);
   };
 
   // ================= MQTT =================
@@ -72,19 +129,32 @@ export default function Dashboard() {
         const uid = normalizeUID(raw);
         lastUIDRef.current = uid;
 
-        setLastUser(cards[uid] || "Unknown User");
-        setLastUpdated(new Date().toLocaleTimeString());
+        const user = cards[uid] || "Unknown User";
+
+        setLastUser(user);
+        setLastUpdated(
+          new Date().toLocaleTimeString()
+        );
+
+        if (cards[uid]) {
+          notifySuccess(`RFID Detected: ${user}`);
+        } else {
+          notifyWarning("Unknown RFID card scanned");
+        }
       }
 
       if (topic === "lock/door1/status") {
         setStatus(raw);
-        setLastUpdated(new Date().toLocaleTimeString());
+        setLastUpdated(
+          new Date().toLocaleTimeString()
+        );
       }
     };
 
     client.on("message", handler);
 
-    return () => client.removeListener("message", handler);
+    return () =>
+      client.removeListener("message", handler);
   }, []);
 
   return (
@@ -93,8 +163,9 @@ export default function Dashboard() {
 
       <div className="dashboard-container">
         <div className="card">
-
-          <div className={`status ${status.toLowerCase()}`}>
+          <div
+            className={`status ${status.toLowerCase()}`}
+          >
             {status}
           </div>
 
@@ -103,13 +174,30 @@ export default function Dashboard() {
             <h3>{lastUser}</h3>
           </div>
 
-          <p>Last updated: {lastUpdated || "No activity yet"}</p>
+          <p>
+            Last updated:{" "}
+            {lastUpdated || "No activity yet"}
+          </p>
 
           <div className="buttons">
-            <button onClick={unlock}>Unlock</button>
-            <button onClick={lock}>Lock</button>
-          </div>
+            <button
+              onClick={unlock}
+              disabled={isCoolingDown}
+            >
+              {isCoolingDown
+                ? "Unlock"
+                : "Unlock"}
+            </button>
 
+            <button
+              onClick={lock}
+              disabled={isCoolingDown}
+            >
+              {isCoolingDown
+                ? "Lock"
+                : "Lock"}
+            </button>
+          </div>
         </div>
       </div>
     </>
